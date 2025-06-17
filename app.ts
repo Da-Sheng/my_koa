@@ -8,9 +8,11 @@ addAliases({
 import Koa from 'koa';
 import { createContainer, Lifetime } from 'awilix';
 import { loadControllers, scopePerRequest } from 'awilix-koa';
+import serve from 'koa-static'
 import config from '@config/index';
 import render from 'koa-swig'
 import { co } from 'co';
+import { historyApiFallback } from 'koa2-connect-history-api-fallback'
 
 const app = new Koa();
 const container = createContainer();
@@ -24,7 +26,11 @@ container.loadModules([
         lifetime: Lifetime.SCOPED
     }
 });
-
+app.use(historyApiFallback({
+    index: '/',
+    whiteList: ['/api']
+}))
+app.use(serve(staticDir))
 app.use(scopePerRequest(container));
 app.use(loadControllers(`${__dirname}/routes/**/*.ts`));
 app.context.render = co.wrap(render({
